@@ -54,6 +54,7 @@ const ColorPicker = () => {
     }
 
     function OnLightChange(e: MouseEvent) {
+        e.preventDefault();
         const lightRect = colorPickerRef.current!.getBoundingClientRect();
         const pointerWidth = lightPointerRef.current!.clientWidth;
         const pointerHeight = lightPointerRef.current!.clientHeight;
@@ -125,6 +126,7 @@ const ColorPicker = () => {
     }
 
     function OnHueChange(e: MouseEvent) {
+        e.preventDefault();
         const hueRect = hueRef.current!.getBoundingClientRect();
         const pointerHeight = huePointerRef.current!.clientHeight;
 
@@ -136,6 +138,7 @@ const ColorPicker = () => {
     }
 
     function OnAlphaChange(e: MouseEvent) {
+        e.preventDefault();
         const alphaRect = alphaRef.current!.getBoundingClientRect();
         const pointerHeight = alphaPointerRef.current!.clientHeight;
 
