@@ -1,26 +1,19 @@
 import React from 'react';
-import logo from './logo.svg';
+/*import ColorPicker from './ColorPicker';*/
+import ColorPicker from './CP';
 import './App.css';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    //const target = useRef<HTMLDivElement | null>(null);
+
+    return (
+        <div className="App">
+            <h1>Color Picker</h1>
+            <ColorPicker />
+            {/*<ColorPicker target={target} />*/}
+            {/*<div ref={target} id="target"></div>*/}
+        </div>
+    );
 }
 
 export default App;
