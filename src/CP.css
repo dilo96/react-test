@@ -38,6 +38,7 @@
     overflow: hidden;
     border: 4px inset #fff;
     border-radius: 8px;
+    cursor: pointer;
 }
 
 .color-picker-control-frame {
@@ -75,7 +76,13 @@
     z-index: 1;
 }
 
+.color-picker-control-frame > .pointer {
+    left: calc(240px + 16px/2);
+}
+
+
 .pointer {
+    top: calc(16px/-2);
     width: 16px;
     height: 16px;
     border-radius: 100%;
@@ -87,7 +94,7 @@
 
 
 .color-picker-spectrum-control {
-    display:flex;
+    display: flex;
     /*align-items:center;*/
     justify-content: center;
     width: 10%;
@@ -96,6 +103,7 @@
     border: 4px inset #fff;
     border-radius: 32px;
     background: linear-gradient(to bottom, red, yellow, green, cyan, blue, magenta, red);
+    cursor: pointer;
 }
 
 .color-picker-alpha-control {
@@ -109,6 +117,7 @@
     border-radius: 32px;
     /*background-image: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,255)), url("https://img.freepik.com/premium-vector/grid-transparency-effect-seamless-pattern-png-photoshop_194360-315.jpg");*/
     background-size: 160px;
+    cursor: pointer;
 }
 
 .color-picker-field {
@@ -122,32 +131,22 @@
 }
     .color-picker-field:nth-child(1) {
         width: 24%;
-        border: 2px inset #000;
-        outline: none;
     }
 
     .color-picker-field:nth-child(2) {
         width: 12%;
-        border: 2px inset #f66;
-        outline: none;
     }
 
     .color-picker-field:nth-child(3) {
         width: 12%;
-        border: 2px inset #6f6;
-        outline: none;
     }
 
     .color-picker-field:nth-child(4) {
         width: 12%;
-        border: 2px inset #66f;
-        outline: none;
     }
 
     .color-picker-field:nth-child(5) {
         width: 12%;
-        border: 2px inset #000;
-        outline: none;
     }
 
     .color-picker-field:nth-child(1):focus {

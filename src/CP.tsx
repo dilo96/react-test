@@ -5,10 +5,10 @@ const ColorPicker = () => {
 
     const [tint, setTint] = useState<string>();
     const [Hex, setHex] = useState<string>();
-    const [R, setR] = useState<string | number>();
-    const [G, setG] = useState<string | number>();
-    const [B, setB] = useState<string | number>();
-    const [A, setA] = useState<string | number>();
+    const [R, setR] = useState<number>();
+    const [G, setG] = useState<number>();
+    const [B, setB] = useState<number>();
+    const [A, setA] = useState<number>();
 
     const colorPickerRef = useRef<HTMLDivElement>(null);
     const lightPointerRef = useRef<HTMLDivElement>(null);
@@ -18,53 +18,110 @@ const ColorPicker = () => {
     const alphaPointerRef = useRef<HTMLDivElement>(null);
     const alphaRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() =>  CalculateColor,[]);
+    useEffect(() => CalculateColor(), []);
 
-
-
-    function CalculateColor()
-    {
-        const hueY = huePointerRef.current!.offsetTop - hueRef.current!.getBoundingClientRect().top;
+    function CalculateColor() {
+        const hueY = huePointerRef.current!.offsetTop - hueRef.current!.getBoundingClientRect().top + hueRef.current!.clientTop;
         const hueGradientHeight = hueRef.current!.clientHeight;
         const huePercent = (hueY / hueGradientHeight) * 100;
         const hue = (huePercent / 100) * 360;
 
-        const lightX = lightPointerRef.current!.offsetLeft;// - lightRef.current!.getBoundingClientRect().left;
         const lightGradientWidth = lightRef.current!.clientWidth;
-        const lightPercentX = lightX / lightGradientWidth;
-
-        const lightY = lightPointerRef.current!.offsetTop;// - lightRef.current!.getBoundingClientRect().top;
+        const x = (lightPointerRef.current!.offsetLeft+8)  / lightGradientWidth;
         const lightGradientHeight = lightRef.current!.clientHeight;
-        const lightPercentY =1- (lightY / lightGradientHeight);
+        const y = 1-((lightPointerRef.current!.offsetTop + 8) / lightGradientHeight);//  1 - (lightY / lightGradientHeight);
 
-        console.log(lightPercentX + " " + lightPercentY);
+        const saturation = x;
+        const lightness = (1 - 0.5 * x) * y;// y + (0.5 - Math.abs(0.5 - x));
 
+        //console.log("x "+x+" y "+y+" s "+saturation + " l " + lightness);
 
-        const alphaY = alphaPointerRef.current!.offsetTop - alphaRef.current!.getBoundingClientRect().top;
+        const alphaY = alphaPointerRef.current!.offsetTop - alphaRef.current!.getBoundingClientRect().top + alphaRef.current!.clientTop;
         const alphaGradientHeight = alphaRef.current!.clientHeight;
-        const alphaPercent = (alphaY / alphaGradientHeight);
+        const alphaPercent = 1 - (alphaY / alphaGradientHeight);
+        const alpha = Math.round(alphaPercent * 255); // Alfa va da 0 a 255
 
-        const color = HSLToRGBA(hue, lightPercentX, lightPercentY, alphaPercent);
+        let color = hslToRgba(hue / 360, 1, 0.5, alpha);
+
+        // Aggiorna le variabili di stato
+        setTint(`rgba(${color.r}, ${color.g}, ${color.b}, 255)`);
+         color = hslToRgba(hue / 360, saturation, lightness, alpha);
+        setHex(rgbToHex(color.r, color.g, color.b, color.a));
         setR(color.r);
         setG(color.g);
         setB(color.b);
-        setA(color.a);
-        setHex(color.hex);
-        setTint(color
-            .lightnessAdjustedHex);
+        setA(alpha / 255);
     }
 
     function OnLightChange(e: MouseEvent) {
         const lightRect = colorPickerRef.current!.getBoundingClientRect();
         const pointerWidth = lightPointerRef.current!.clientWidth;
         const pointerHeight = lightPointerRef.current!.clientHeight;
-        const left = Math.max(-pointerWidth / 2, Math.min(e.clientX - lightRect.left - pointerWidth / 2, lightRect.width - pointerWidth));
-        const top = Math.max(-pointerHeight / 2, Math.min(e.clientY - lightRect.top - pointerHeight / 2, lightRect.height - pointerHeight));
+        const left = Math.max(-pointerWidth / 2, Math.min(e.clientX - lightRect.left - pointerWidth / 2, lightRect.width - pointerWidth / 2));
+        const top = Math.max(-pointerHeight / 2, Math.min(e.clientY - lightRect.top - pointerHeight / 2, lightRect.height - pointerHeight / 2));
 
         lightPointerRef.current!.style.left = left + "px";
         lightPointerRef.current!.style.top = top + "px";
 
         CalculateColor();
+    }
+
+    function hslToRgba(h: number, s: number, l: number, a: number) {
+        let r, g, b;
+
+        if (s === 0) {
+            r = g = b = l; // Grayscale
+        } else {
+            const hueToRgb = (p: number, q: number, t: number) => {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1 / 6) return p + (q - p) * 6 * t;
+                if (t < 1 / 2) return q;
+                if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                return p;
+            };
+
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = hueToRgb(p, q, h + 1 / 3);
+            g = hueToRgb(p, q, h);
+            b = hueToRgb(p, q, h - 1 / 3);
+        }
+
+        return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255), a };
+    }
+
+    function rgbToHex(r: number, g: number, b: number, a: number) {
+        const componentToHex = (c: number) => {
+            const hex = c.toString(16);
+            return hex.length === 1 ? "0" + hex : hex;
+        };
+
+        return `#${componentToHex(r)}${componentToHex(g)}${componentToHex(b)}${componentToHex(a)}`;
+    }
+
+    function hexToRGBA(hex: string) {
+        // Rimuovi l'eventuale simbolo "#" dalla stringa esadecimale
+        hex = hex.replace(/^#/, '');
+
+        // Controlla la lunghezza della stringa esadecimale per determinare se è RGB o RGBA
+        if (hex.length === 6) {
+            const r = parseInt(hex.slice(0, 2), 16);
+            const g = parseInt(hex.slice(2, 4), 16);
+            const b = parseInt(hex.slice(4, 6), 16);
+
+            return `rgba(${r}, ${g}, ${b}, 1)`;
+        } else if (hex.length === 8) {
+            const r = parseInt(hex.slice(0, 2), 16);
+            const g = parseInt(hex.slice(2, 4), 16);
+            const b = parseInt(hex.slice(4, 6), 16);
+            const a = (parseInt(hex.slice(6, 8), 16) / 255).toFixed(2);
+
+            return `rgba(${r}, ${g}, ${b}, ${a})`;
+        } else {
+            // Restituisci un messaggio di errore se la stringa hex non è valida
+            return "Formato hex non valido";
+        }
     }
 
     function OnHueChange(e: MouseEvent) {
@@ -73,7 +130,7 @@ const ColorPicker = () => {
 
         const top = Math.max(-pointerHeight / 2, Math.min(e.clientY - hueRect.top - pointerHeight / 2, hueRect.height - pointerHeight));
 
-        huePointerRef.current!.style.top = top + pointerHeight / 4 + "px";
+        huePointerRef.current!.style.top = top + "px";
 
         CalculateColor();
     }
@@ -81,84 +138,12 @@ const ColorPicker = () => {
     function OnAlphaChange(e: MouseEvent) {
         const alphaRect = alphaRef.current!.getBoundingClientRect();
         const pointerHeight = alphaPointerRef.current!.clientHeight;
-      
+
         const top = Math.max(-pointerHeight / 2, Math.min(e.clientY - alphaRect.top - pointerHeight / 2, alphaRect.height - pointerHeight));
 
-        alphaPointerRef.current!.style.top = top + pointerHeight / 4 + "px";
+        alphaPointerRef.current!.style.top = top + "px";
 
         CalculateColor();
-    }
-
-    function HSLToRGBA(hue: number, saturation: number, lightness: number, alpha: number) {
-        // Convert HSL values to RGB
-        const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
-        const huePrime = hue / 60;
-        const x = chroma * (1 - Math.abs((huePrime % 2) - 1));
-        let r, g, b;
-
-        if (huePrime >= 0 && huePrime < 1) {
-            r = chroma;
-            g = x;
-            b = 0;
-        } else if (huePrime >= 1 && huePrime < 2) {
-            r = x;
-            g = chroma;
-            b = 0;
-        } else if (huePrime >= 2 && huePrime < 3) {
-            r = 0;
-            g = chroma;
-            b = x;
-        } else if (huePrime >= 3 && huePrime < 4) {
-            r = 0;
-            g = x;
-            b = chroma;
-        } else if (huePrime >= 4 && huePrime < 5) {
-            r = x;
-            g = 0;
-            b = chroma;
-        } else {
-            r = chroma;
-            g = 0;
-            b = x;
-        }
-        //const lightnessAdjustment = lightness - chroma / 2;
-        //r += lightnessAdjustment;
-        //g += lightnessAdjustment;
-        //b += lightnessAdjustment;
-
-        // Assicurati che i valori siano all'interno dell'intervallo valido
-        r = Math.round(r * 255);
-        g = Math.round(g * 255);
-        b = Math.round(b * 255);
-
-        // Convert RGB values to RGBA
-        const rgbaColor = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-
-        // Convert the decimal values to hexadecimal
-        const hexR = r.toString(16).padStart(2, '0');
-        const hexG = g.toString(16).padStart(2, '0');
-        const hexB = b.toString(16).padStart(2, '0');
-        const hexA = Math.round(alpha * 255).toString(16).padStart(2, '0'); // Convert alpha to 0-255 range
-
-        // Combine the hex values
-        const hexColor = `#${hexR}${hexG}${hexB}${hexA}`;
-
-        // Calculate the RGBA color with lightness set to 0.5
-        const lightnessAdjustedRGBA = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-
-        // Calculate the hexadecimal color with lightness set to 0.5
-        const lightnessAdjustedHex = `#${hexR}${hexG}${hexB}`;
-
-        return {
-            hex: hexColor,
-            rgba: rgbaColor,
-            r: r,
-            g: g,
-            b: b,
-            a: alpha.toFixed(2),
-            lightnessAdjustedHex: lightnessAdjustedHex,
-            lightnessAdjustedRGBA: lightnessAdjustedRGBA
-        };
     }
 
     const colorPickerStyle = {
@@ -166,7 +151,7 @@ const ColorPicker = () => {
     }
 
     const alphaControlStyle = {
-        backgroundImage: `linear-gradient(to bottom, rgba(${R}, ${G}, ${B}, 0), rgba(${R}, ${G}, ${B}, 255)), url("https://img.freepik.com/premium-vector/grid-transparency-effect-seamless-pattern-png-photoshop_194360-315.jpg")`
+        backgroundImage: `linear-gradient(to top, rgba(${R}, ${G}, ${B}, 0), rgba(${R}, ${G}, ${B}, 255)), url("https://img.freepik.com/premium-vector/grid-transparency-effect-seamless-pattern-png-photoshop_194360-315.jpg")`
     }
 
     const lightPointerStyle = {
@@ -179,24 +164,22 @@ const ColorPicker = () => {
         backgroundColor: `rgba(${R}, ${G}, ${B}, 255)`
     }
 
-    
-
     function bindLight(e: React.MouseEvent<HTMLDivElement>) {
-        console.log("bind light");
         document.addEventListener("mousemove", OnLightChange);
         document.addEventListener("mouseup", unbindLight);
+        OnLightChange(e.nativeEvent);
     }
 
     function bindHue(e: React.MouseEvent<HTMLDivElement>) {
-        console.log("bind hue");
         document.addEventListener("mousemove", OnHueChange);
         document.addEventListener("mouseup", unbindHue);
+        OnHueChange(e.nativeEvent);
     }
 
     function bindAlpha(e: React.MouseEvent<HTMLDivElement>) {
-        console.log("bind alpha");
         document.addEventListener("mousemove", OnAlphaChange);
         document.addEventListener("mouseup", unbindAlpha);
+        OnAlphaChange(e.nativeEvent);
     }
 
     function unbindLight(e: MouseEvent) {
@@ -214,6 +197,26 @@ const ColorPicker = () => {
         document.removeEventListener("mouseup", unbindAlpha);
     }
 
+    function onHexChange(e: React.ChangeEvent<HTMLInputElement>) {
+
+    }
+
+    function onRChange(e: React.ChangeEvent<HTMLInputElement>) {
+
+    }
+
+    function onGChange(e: React.ChangeEvent<HTMLInputElement>) {
+
+    }
+
+    function onBChange(e: React.ChangeEvent<HTMLInputElement>) {
+
+    }
+
+    function onHAhange(e: React.ChangeEvent<HTMLInputElement>) {
+
+    }
+
     return (
         <div className="color-picker">
             <div className="color-picker-row-1">
@@ -223,18 +226,22 @@ const ColorPicker = () => {
                         <div className="color-picker-grayscale-1"></div>
                         <div className="color-picker-grayscale-2"> </div>
                     </div>
-                    <div  ref={lightPointerRef} style={lightPointerStyle} className="pointer"></div>
+                    <div ref={lightPointerRef} style={lightPointerStyle} className="pointer"></div>
                 </div>
 
-                <div onMouseDown={bindHue} ref={hueRef} className="color-picker-spectrum-control">     <div onMouseMove={() => OnHueChange} ref={huePointerRef} style={huePointerStyle} className="pointer"></div> </div>
-                <div onMouseDown={bindAlpha} ref={alphaRef} style={alphaControlStyle} className="color-picker-alpha-control">     <div onMouseMove={() => OnAlphaChange} ref={alphaPointerRef} style={alphaPointerStyle} className="pointer"></div></div>
+                <div onMouseDown={bindHue} ref={hueRef} className="color-picker-spectrum-control">
+                    <div onMouseMove={() => OnHueChange} ref={huePointerRef} style={huePointerStyle} className="pointer"></div>
+                </div>
+                <div onMouseDown={bindAlpha} ref={alphaRef} style={alphaControlStyle} className="color-picker-alpha-control">
+                    <div onMouseMove={() => OnAlphaChange} ref={alphaPointerRef} style={alphaPointerStyle} className="pointer"></div>
+                </div>
             </div>
             <div className="color-picker-row-2">
-                <input type="text" className="color-picker-field" value={Hex}></input>
+                <input onChange={onHexChange} type="text" className="color-picker-field" value={Hex}></input>
                 <input type="text" className="color-picker-field" value={R}></input>
                 <input type="text" className="color-picker-field" value={G}></input>
                 <input type="text" className="color-picker-field" value={B}></input>
-                <input type="text" className="color-picker-field" value={A}></input>
+                <input type="text" className="color-picker-field" value={A?.toFixed(2)}></input>
             </div>
             <div className="color-picker-row-3">
                 <p className="color-picker-label">HEX</p>
@@ -246,4 +253,5 @@ const ColorPicker = () => {
         </div>
     );
 };
+
 export default ColorPicker;
